@@ -131,11 +131,11 @@ void stop_gc_thread(struct f2fs_sb_info *sbi)
 
 static int select_gc_type(struct f2fs_gc_kthread *gc_th, int gc_type)
 {
-	int gc_mode = (gc_type == BG_GC) ? GC_CB : GC_GREEDY;
+	int gc_mode = GC_GREEDY;
 
 	if (gc_th && gc_th->gc_idle) {
 		if (gc_th->gc_idle == 1)
-			gc_mode = GC_CB;
+			gc_mode = GC_GREEDY;
 		else if (gc_th->gc_idle == 2)
 			gc_mode = GC_GREEDY;
 	}
@@ -153,7 +153,7 @@ static void select_policy(struct f2fs_sb_info *sbi, int gc_type,
 		p->max_search = dirty_i->nr_dirty[type];
 		p->ofs_unit = 1;
 	} else {
-		p->gc_mode = select_gc_type(sbi->gc_thread, gc_type);
+		p->gc_mode = GC_GREEDY;
 		p->dirty_segmap = dirty_i->dirty_segmap[DIRTY];
 		p->max_search = dirty_i->nr_dirty[DIRTY];
 		p->ofs_unit = sbi->segs_per_sec;
@@ -256,7 +256,7 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 {
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 	struct victim_sel_policy p;
-	unsigned int secno, max_cost;
+	unsigned int secno, max_cost, min_cost1=0;
 	int nsearched = 0;
 
 	mutex_lock(&dirty_i->seglist_lock);
@@ -300,9 +300,9 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 
 		cost = get_gc_cost(sbi, segno, &p);
 
-		if (p.min_cost > cost) {
+		if (min_cost1 < cost) {
 			p.min_segno = segno;
-			p.min_cost = cost;
+			min_cost1 = cost;
 		} else if (unlikely(cost == max_cost)) {
 			continue;
 		}
