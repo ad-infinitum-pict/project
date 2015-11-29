@@ -256,7 +256,7 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 {
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 	struct victim_sel_policy p;
-	unsigned int secno, max_cost;
+	unsigned int secno, max_cost, min_cost1=0;
 	int nsearched = 0;
 
 	mutex_lock(&dirty_i->seglist_lock);
@@ -300,9 +300,9 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 
 		cost = get_gc_cost(sbi, segno, &p);
 
-		if (p.min_cost < cost) {
+		if (min_cost1 < cost) {
 			p.min_segno = segno;
-			p.min_cost = cost;
+			min_cost1 = cost;
 		} else if (unlikely(cost == max_cost)) {
 			continue;
 		}
