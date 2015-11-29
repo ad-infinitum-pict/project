@@ -302,7 +302,7 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 
 		if (min_cost1 < cost) {
 			p.min_segno = segno;
-			min_cost1 = cost;
+			min_cost1 = cost; // to save maximum cost segment
 		} else if (unlikely(cost == max_cost)) {
 			continue;
 		}
