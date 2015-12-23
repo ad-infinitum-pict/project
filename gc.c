@@ -42,7 +42,7 @@ static int gc_thread_func(void *data)
 						msecs_to_jiffies(wait_ms));
 		if (kthread_should_stop())
 			break;
-
+		printk(KERN_INFO "\n--------**********Inside gc_thread_func, garbage collection has started******-------\n\n");
 		if (sbi->sb->s_writers.frozen >= SB_FREEZE_WRITE) {
 			increase_sleep_time(gc_th, &wait_ms);
 			continue;
@@ -108,6 +108,7 @@ int start_gc_thread(struct f2fs_sb_info *sbi)
 
 	sbi->gc_thread = gc_th;
 	init_waitqueue_head(&sbi->gc_thread->gc_wait_queue_head);
+	printk(KERN_INFO "\n---------**********Inside start_gc_thread GC thread invoked****----------\n");
 	sbi->gc_thread->f2fs_gc_task = kthread_run(gc_thread_func, sbi,
 			"f2fs_gc-%u:%u", MAJOR(dev), MINOR(dev));
 	if (IS_ERR(gc_th->f2fs_gc_task)) {
