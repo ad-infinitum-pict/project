@@ -42,7 +42,7 @@ static int gc_thread_func(void *data)
 						msecs_to_jiffies(wait_ms));
 		if (kthread_should_stop())
 			break;
-		printk(KERN_INFO "\n--------**********Inside gc_thread_func, garbage collection has started******-------\n\n");
+
 		if (sbi->sb->s_writers.frozen >= SB_FREEZE_WRITE) {
 			increase_sleep_time(gc_th, &wait_ms);
 			continue;
@@ -108,7 +108,6 @@ int start_gc_thread(struct f2fs_sb_info *sbi)
 
 	sbi->gc_thread = gc_th;
 	init_waitqueue_head(&sbi->gc_thread->gc_wait_queue_head);
-	printk(KERN_INFO "\n---------**********Inside start_gc_thread GC thread invoked****----------\n");
 	sbi->gc_thread->f2fs_gc_task = kthread_run(gc_thread_func, sbi,
 			"f2fs_gc-%u:%u", MAJOR(dev), MINOR(dev));
 	if (IS_ERR(gc_th->f2fs_gc_task)) {
@@ -132,11 +131,11 @@ void stop_gc_thread(struct f2fs_sb_info *sbi)
 
 static int select_gc_type(struct f2fs_gc_kthread *gc_th, int gc_type)
 {
-	int gc_mode = GC_GREEDY;
+	int gc_mode = (gc_type == BG_GC) ? GC_CB : GC_GREEDY; // BG -> is Background
 
 	if (gc_th && gc_th->gc_idle) {
 		if (gc_th->gc_idle == 1)
-			gc_mode = GC_GREEDY;
+			gc_mode = GC_CB;
 		else if (gc_th->gc_idle == 2)
 			gc_mode = GC_GREEDY;
 	}
@@ -154,7 +153,7 @@ static void select_policy(struct f2fs_sb_info *sbi, int gc_type,
 		p->max_search = dirty_i->nr_dirty[type];
 		p->ofs_unit = 1;
 	} else {
-		p->gc_mode = GC_GREEDY;
+		p->gc_mode = select_gc_type(sbi->gc_thread, gc_type);
 		p->dirty_segmap = dirty_i->dirty_segmap[DIRTY];
 		p->max_search = dirty_i->nr_dirty[DIRTY];
 		p->ofs_unit = sbi->segs_per_sec;
@@ -257,7 +256,7 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 {
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 	struct victim_sel_policy p;
-	unsigned int secno, max_cost, min_cost1=0;
+	unsigned int secno, max_cost;
 	int nsearched = 0;
 
 	mutex_lock(&dirty_i->seglist_lock);
@@ -301,9 +300,9 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 
 		cost = get_gc_cost(sbi, segno, &p);
 
-		if (min_cost1 < cost) {
+		if (p.min_cost > cost) {
 			p.min_segno = segno;
-			min_cost1 = cost; // to save maximum cost segment
+			p.min_cost = cost;
 		} else if (unlikely(cost == max_cost)) {
 			continue;
 		}
