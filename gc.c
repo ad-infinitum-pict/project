@@ -42,6 +42,8 @@ static int gc_thread_func(void *data)
 						msecs_to_jiffies(wait_ms));
 		if (kthread_should_stop())
 			break;
+                printk(KERN_INFO "\n----------************Inside gc_thread_func, Starting Garbage Collection****----------\n");
+
 
 		if (sbi->sb->s_writers.frozen >= SB_FREEZE_WRITE) {
 			increase_sleep_time(gc_th, &wait_ms);
@@ -76,6 +78,7 @@ static int gc_thread_func(void *data)
 			increase_sleep_time(gc_th, &wait_ms);
 
 		stat_inc_bggc_count(sbi);
+                printk(KERN_INFO "--------------***************Policy invoked : %d\t number of times********--------",(sbi)->bg_gc);
 
 		/* if return value is not zero, no victim was selected */
 		if (f2fs_gc(sbi))
@@ -108,6 +111,7 @@ int start_gc_thread(struct f2fs_sb_info *sbi)
 
 	sbi->gc_thread = gc_th;
 	init_waitqueue_head(&sbi->gc_thread->gc_wait_queue_head);
+        printk(KERN_INFO "\n---------*********Inside start_gc_thread, Calling Gc thread*****---------\n");
 	sbi->gc_thread->f2fs_gc_task = kthread_run(gc_thread_func, sbi,
 			"f2fs_gc-%u:%u", MAJOR(dev), MINOR(dev));
 	if (IS_ERR(gc_th->f2fs_gc_task)) {
@@ -158,7 +162,10 @@ static void select_policy(struct f2fs_sb_info *sbi, int gc_type,
 		p->max_search = dirty_i->nr_dirty[DIRTY];
 		p->ofs_unit = sbi->segs_per_sec;
 	}
-
+        if(p->gc_mode == GC_GREEDY)
+              printk(KERN_INFO "\n---------*********Policy selected is GREEDY  *****---------\n");
+        else
+              printk(KERN_INFO "\n---------*********Policy selected is Cost Benefit  *****---------\n");
 	if (p->max_search > sbi->max_victim_search)
 		p->max_search = sbi->max_victim_search;
 
