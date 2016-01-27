@@ -690,7 +690,7 @@ static void do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
 int f2fs_gc(struct f2fs_sb_info *sbi)
 {
 	unsigned int segno, i;
-	int gc_type = BG_GC;
+	int gc_type = FG_GC;
 	int nfree = 0;
 	int ret = -1;
 	struct cp_control cpc;
