@@ -42,7 +42,7 @@ static int gc_thread_func(void *data)
 						msecs_to_jiffies(wait_ms));
 		if (kthread_should_stop())
 			break;
-                printk(KERN_INFO "\n----------************Inside gc_thread_func, Starting Garbage Collection****----------\n");
+                printk(KERN_ERR "\n----------************Inside gc_thread_func, Starting Garbage Collection****----------\n");
 
 
 		if (sbi->sb->s_writers.frozen >= SB_FREEZE_WRITE) {
@@ -78,7 +78,7 @@ static int gc_thread_func(void *data)
 			increase_sleep_time(gc_th, &wait_ms);
 
 		stat_inc_bggc_count(sbi);
-                printk(KERN_INFO "--------------***************Policy invoked : %d\t number of times********--------",(sbi)->bg_gc);
+                printk(KERN_ERR "--------------***************Policy invoked : %d\t number of times********--------",(sbi)->bg_gc);
 
 		/* if return value is not zero, no victim was selected */
 		if (f2fs_gc(sbi))
@@ -111,7 +111,7 @@ int start_gc_thread(struct f2fs_sb_info *sbi)
 
 	sbi->gc_thread = gc_th;
 	init_waitqueue_head(&sbi->gc_thread->gc_wait_queue_head);
-        printk(KERN_INFO "\n---------*********Inside start_gc_thread, Calling Gc thread*****---------\n");
+        printk(KERN_ERR "\n---------*********Inside start_gc_thread, Calling Gc thread*****---------\n");
 	sbi->gc_thread->f2fs_gc_task = kthread_run(gc_thread_func, sbi,
 			"f2fs_gc-%u:%u", MAJOR(dev), MINOR(dev));
 	if (IS_ERR(gc_th->f2fs_gc_task)) {
@@ -163,9 +163,9 @@ static void select_policy(struct f2fs_sb_info *sbi, int gc_type,
 		p->ofs_unit = sbi->segs_per_sec;
 	}
         if(p->gc_mode == GC_GREEDY)
-              printk(KERN_INFO "\n---------*********Policy selected is GREEDY  *****---------\n");
+              printk(KERN_ERR "\n---------*********Policy selected is GREEDY  *****---------\n");
         else
-              printk(KERN_INFO "\n---------*********Policy selected is Cost Benefit  *****---------\n");
+              printk(KERN_ERR "\n---------*********Policy selected is Cost Benefit  *****---------\n");
 	if (p->max_search > sbi->max_victim_search)
 		p->max_search = sbi->max_victim_search;
 
@@ -267,7 +267,9 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 	int nsearched = 0;
 
 	mutex_lock(&dirty_i->seglist_lock);
-
+	int i;
+	for(i=0;i<9;i++)
+	printk(KERN_ERR "\n----------***********In get_vict_by_d no of Dirty segments: in :: %d are :: %d (Abhi)*******-----\n",i,dirty_i->nr_dirty[i]);
 	p.alloc_mode = alloc_mode;
 	select_policy(sbi, gc_type, type, &p);
 
@@ -335,6 +337,8 @@ got_it:
 				prefree_segments(sbi), free_segments(sbi));
 	}
 	mutex_unlock(&dirty_i->seglist_lock);
+	 for(i=0;i<9;i++)
+        printk(KERN_ERR "\n----------***********In vict_by_d number of Dirty segments: in :: %d are :: %d(Abhi)*******-----\n",i,dirty_i->nr_dirty[i]);
 
 	return (p.min_segno == NULL_SEGNO) ? 0 : 1;
 }
@@ -478,7 +482,7 @@ block_t start_bidx_of_node(unsigned int node_ofs, struct f2fs_inode_info *fi)
 {
 	unsigned int indirect_blks = 2 * NIDS_PER_BLOCK + 4;
 	unsigned int bidx;
-
+	printk(KERN_ERR "\n----------***********1 In start_of_node no of Dirty Pages::: %d (Abhi)*******-----\n",fi->dirty_pages.counter);
 	if (node_ofs == 0)
 		return 0;
 
@@ -531,7 +535,7 @@ static void move_data_page(struct inode *inode, struct page *page, int gc_type)
 		.type = DATA,
 		.rw = WRITE_SYNC,
 	};
-
+	
 	if (gc_type == BG_GC) {
 		if (PageWriteback(page))
 			goto out;
@@ -712,6 +716,8 @@ gc_more:
 	if (unlikely(f2fs_cp_error(sbi)))
 		goto stop;
 
+        
+
 	if (gc_type == BG_GC && has_not_enough_free_secs(sbi, nfree)) {
 		gc_type = FG_GC;
 		write_checkpoint(sbi, &cpc);
@@ -742,7 +748,7 @@ gc_more:
 		write_checkpoint(sbi, &cpc);
 stop:
 	mutex_unlock(&sbi->gc_mutex);
-
+	
 	put_gc_inode(&gc_list);
 	return ret;
 }
