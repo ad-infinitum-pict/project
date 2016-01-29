@@ -44,7 +44,7 @@ static int gc_thread_func(void *data)
 			break;
                 printk(KERN_ERR "\n----------************Inside gc_thread_func, Starting Garbage Collection****----------\n");
 
-
+		printk(KERN_ERR "\n----------***********Dirty Counter in gc_thread_func:: %d (Abhi)*******-----\n",(sbi->stat_info)->dirty_count);
 		if (sbi->sb->s_writers.frozen >= SB_FREEZE_WRITE) {
 			increase_sleep_time(gc_th, &wait_ms);
 			continue;
@@ -130,6 +130,7 @@ void stop_gc_thread(struct f2fs_sb_info *sbi)
 		return;
 	kthread_stop(gc_th->f2fs_gc_task);
 	kfree(gc_th);
+	printk(KERN_ERR "\n----------**********Garbage collection has been stoped (Abhi)*******-----\n";
 	sbi->gc_thread = NULL;
 }
 
@@ -694,6 +695,7 @@ static void do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
 	stat_inc_seg_count(sbi, GET_SUM_TYPE((&sum->footer)), gc_type);
 	stat_inc_call_count(sbi->stat_info);
 
+	printk(KERN_ERR "\n----------***********Call Counter in do_garbage_collect:: %d (Abhi)*******-----\n",(sbi->stat_info)->call_count);
 	f2fs_put_page(sum_page, 1);
 }
 
@@ -748,7 +750,7 @@ gc_more:
 		write_checkpoint(sbi, &cpc);
 stop:
 	mutex_unlock(&sbi->gc_mutex);
-	
+	printk(KERN_ERR "\n----------***********Dirty Counter in f2fs_gc:: %d (Abhi)*******-----\n",(sbi->stat_info)->dirty_count);
 	put_gc_inode(&gc_list);
 	return ret;
 }
