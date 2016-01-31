@@ -375,12 +375,14 @@ static void __remove_ino_entry(struct f2fs_sb_info *sbi, nid_t ino, int type)
 void add_dirty_inode(struct f2fs_sb_info *sbi, nid_t ino, int type)
 {
 	/* add new dirty ino entry into list */
+	printk(KERN_ERR "\n----------***********add_dirty_inode(Akshay)*******-----\n");
 	__add_ino_entry(sbi, ino, type);
 }
 
 void remove_dirty_inode(struct f2fs_sb_info *sbi, nid_t ino, int type)
 {
 	/* remove dirty ino entry from list */
+	printk(KERN_ERR "\n----------***********remove_dirty_inode(Akshay)*******-----\n");
 	__remove_ino_entry(sbi, ino, type);
 }
 
