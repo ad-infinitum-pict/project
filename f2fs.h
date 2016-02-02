@@ -1253,6 +1253,7 @@ enum {
 
 static inline void set_inode_flag(struct f2fs_inode_info *fi, int flag)
 {
+	if(flag==1){printk(KERN_ERR "\n----------***********flag = 1 inside set_inode_flag(akshay)*******-----\n");}
 	if (!test_bit(flag, &fi->flags))
 		set_bit(flag, &fi->flags);
 }
