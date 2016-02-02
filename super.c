@@ -180,8 +180,7 @@ static void f2fs_sb_release(struct kobject *kobj)
 }
 
 #define F2FS_ATTR_OFFSET(_struct_type, _name, _mode, _show, _store, _offset) \
-static struct f2fs_attr f2fs_attr_##_name = 
-{			\
+static struct f2fs_attr f2fs_attr_##_name = {			\
 	.attr = {.name = __stringify(_name), .mode = _mode },	\
 	.show	= _show,					\
 	.store	= _store,					\
@@ -400,7 +399,7 @@ static struct inode *f2fs_alloc_inode(struct super_block *sb)
 
 	/* Initialize f2fs-specific inode info */
 	fi->vfs_inode.i_version = 1;
-	//printk(KERN_ERR "\n----------***********Initialising counter to 0 in f2fs_alloc_inode(Abhi1)*******-----\n");
+	//printk(KERN_ERR "\n---------*********Initializing counter to zero in f2fs_alloc_inode (Abhi)  *****---------\n");
 	atomic_set(&fi->dirty_pages, 0);
 	fi->i_current_depth = 1;
 	fi->i_advise = 0;
@@ -442,7 +441,7 @@ static int f2fs_drop_inode(struct inode *inode)
  */
 static void f2fs_dirty_inode(struct inode *inode, int flags)
 {
-	printk(KERN_ERR "\n----------***********setting dirty inode inside f2fs_dirty_inode (Abhi1)*******-----\n");
+	printk(KERN_ERR "\n---------********setting dirty inode inside f2fs_dirty_inode (Abhi)*****---------\n");
 	set_inode_flag(F2FS_I(inode), FI_DIRTY_INODE);
 }
 
@@ -1023,9 +1022,9 @@ try_onemore:
 	sb->s_maxbytes = max_file_size(le32_to_cpu(raw_super->log_blocksize));
 	sb->s_max_links = F2FS_LINK_MAX;
 	get_random_bytes(&sbi->s_next_generation, sizeof(u32));
-	printk(KERN_ERR "\n----------***********printk - 1(Abhi1)*******-----\n");
+	printk(KERN_ERR "\n---------*********Printk -1 inside f2fs_fill_super (Abhi)  *****---------\n");
 	sb->s_op = &f2fs_sops;
-	printk(KERN_ERR "\n----------***********printk - 2(Abhi1)*******-----\n");
+	printk(KERN_ERR "\n---------*********Printk -2 inside f2fs_fill_super (Abhi)  *****---------\n");
 	sb->s_xattr = f2fs_xattr_handlers;
 	sb->s_export_op = &f2fs_export_ops;
 	sb->s_magic = F2FS_SUPER_MAGIC;
