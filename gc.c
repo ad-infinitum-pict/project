@@ -391,7 +391,7 @@ static int check_valid_map(struct f2fs_sb_info *sbi,
  * On validity, copy that node with cold status, otherwise (invalid node)
  * ignore that.
  */
-static void gc_node_segment(struct f2fs_sb_info *sbi,
+static int gc_node_segment(struct f2fs_sb_info *sbi,
 		struct f2fs_summary *sum, unsigned int segno, int gc_type)
 {
 	bool initial = true;
@@ -550,7 +550,7 @@ out:
  * If the parent node is not valid or the data block address is different,
  * the victim data block is ignored.
  */
-static void gc_data_segment(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
+static int gc_data_segment(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
 		struct gc_inode_list *gc_list, unsigned int segno, int gc_type)
 {
 	struct super_block *sb = sbi->sb;
@@ -636,11 +636,11 @@ next_step:
 		 * In the case of FG_GC, it'd be better to reclaim this victim
 		 * completely.
 		 */
-		if (get_valid_blocks(sbi, segno, 1) != 0) {
-			phase = 2;
-			goto next_step;
+		if (get_valid_blocks(sbi, segno, 1) == 0) {
+			return 1;
 		}
 	}
+	return 0;
 }
 
 static int __get_victim(struct f2fs_sb_info *sbi, unsigned int *victim,
@@ -656,12 +656,13 @@ static int __get_victim(struct f2fs_sb_info *sbi, unsigned int *victim,
 	return ret;
 }
 
-static void do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
+static int do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
 				struct gc_inode_list *gc_list, int gc_type)
 {
 	struct page *sum_page;
 	struct f2fs_summary_block *sum;
 	struct blk_plug plug;
+	int nfree = 0;
 
 	/* read segment summary of victim */
 	sum_page = get_sum_page(sbi, segno);
@@ -672,10 +673,10 @@ static void do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
 
 	switch (GET_SUM_TYPE((&sum->footer))) {
 	case SUM_TYPE_NODE:
-		gc_node_segment(sbi, sum->entries, segno, gc_type);
+		nfree = gc_node_segment(sbi, sum->entries, segno, gc_type);
 		break;
 	case SUM_TYPE_DATA:
-		gc_data_segment(sbi, sum->entries, gc_list, segno, gc_type);
+		nfree = gc_data_segment(sbi, sum->entries, gc_list, segno, gc_type);
 		break;
 	}
 	blk_finish_plug(&plug);
@@ -684,6 +685,7 @@ static void do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
 	stat_inc_call_count(sbi->stat_info);
 
 	f2fs_put_page(sum_page, 1);
+	return nfree;
 }
 
 int f2fs_gc(struct f2fs_sb_info *sbi)
@@ -719,9 +721,11 @@ gc_more:
 		ra_meta_pages(sbi, GET_SUM_BLOCK(sbi, segno), sbi->segs_per_sec,
 								META_SSA);
 
-	for (i = 0; i < sbi->segs_per_sec; i++)
-		do_garbage_collect(sbi, segno + i, &gc_list, gc_type);
-
+	for (i = 0; i < sbi->segs_per_sec; i++){
+		\\No need to check all segments from one section
+		if(!do_garbage_collect(sbi, segno + i, &gc_list, gc_type) && gc_type == FG_GC)
+			break;
+	}
 	if (gc_type == FG_GC) {
 		sbi->cur_victim_sec = NULL_SEGNO;
 		nfree++;
