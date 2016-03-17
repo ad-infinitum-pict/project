@@ -407,7 +407,7 @@ next_step:
 
 		/* stop BG_GC if there is not enough free sections. */
 		if (gc_type == BG_GC && has_not_enough_free_secs(sbi, 0))
-			return;
+			return 0;
 
 		if (check_valid_map(sbi, segno, off) == 0)
 			continue;
@@ -455,9 +455,10 @@ next_step:
 		 * In the case of FG_GC, it'd be better to reclaim this victim
 		 * completely.
 		 */
-		if (get_valid_blocks(sbi, segno, 1) != 0)
-			goto next_step;
+		if (get_valid_blocks(sbi, segno, 1) == 0)
+			return 1;
 	}
+	return 0;
 }
 
 /*
@@ -573,7 +574,7 @@ next_step:
 
 		/* stop BG_GC if there is not enough free sections. */
 		if (gc_type == BG_GC && has_not_enough_free_secs(sbi, 0))
-			return;
+			return 0;
 
 		if (check_valid_map(sbi, segno, off) == 0)
 			continue;
@@ -722,7 +723,7 @@ gc_more:
 								META_SSA);
 
 	for (i = 0; i < sbi->segs_per_sec; i++){
-		\\No need to check all segments from one section
+		//No need to check all segments from one section
 		if(!do_garbage_collect(sbi, segno + i, &gc_list, gc_type) && gc_type == FG_GC)
 			break;
 	}
